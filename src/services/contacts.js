@@ -18,7 +18,7 @@ export const getAllContacts = async ({
       Contacts.countDocuments(),
     ]);
 
-    const paginationData = calculatePaginationData(total, perPage, page);
+    const paginationData = calculatePaginationData(total, page, perPage);
     return {
       data: contacts,
       ...paginationData,
