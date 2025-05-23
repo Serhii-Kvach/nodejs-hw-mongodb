@@ -5,7 +5,9 @@ function parseNumber(number, defaultValue) {
   return parsedNumber;
 }
 
-export function parsePaginationParams({ page, perPage }) {
+export function parsePaginationParams(query) {
+  const { page, perPage } = query;
+
   const parsedPage = parseNumber(page, 1);
   const parsedPerPage = parseNumber(perPage, 10);
   return {
