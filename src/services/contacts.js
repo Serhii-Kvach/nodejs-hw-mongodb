@@ -10,19 +10,24 @@ export const getAllContacts = async ({
   filter = {},
 }) => {
   const skip = (page - 1) * perPage;
-  const [contacts, total] = await Promise.all([
-    Contacts.find(filter)
-      .skip(skip)
-      .limit(perPage)
-      .sort({ [sortBy]: sortOrder }),
-    Contacts.countDocuments(filter),
-  ]);
+  try {
+    const [contacts, total] = await Promise.all([
+      Contacts.find(filter)
+        .skip(skip)
+        .limit(perPage)
+        .sort({ [sortBy]: sortOrder }),
+      Contacts.countDocuments(filter),
+    ]);
 
-  const paginationData = calculatePaginationData(total, perPage, page);
-  return {
-    data: contacts,
-    ...paginationData,
-  };
+    const paginationData = calculatePaginationData(total, perPage, page);
+    return {
+      data: contacts,
+      ...paginationData,
+    };
+  } catch (error) {
+    console.error('Error in getAllContacts:', error);
+    throw error;
+  }
 };
 
 export const getContactById = async (contactId) => {
