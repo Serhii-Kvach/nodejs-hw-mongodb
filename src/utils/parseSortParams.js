@@ -5,6 +5,7 @@ export const SORT_ORDER = {
 
 const parseSortBy = (value) => {
   const keys = [
+    'userId',
     '_id',
     'name',
     'phoneNumber',
