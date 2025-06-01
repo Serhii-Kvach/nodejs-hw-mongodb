@@ -1,6 +1,5 @@
 import { Contacts } from '../models/contact.js';
 import { SORT_ORDER } from '../utils/parseSortParams.js';
-import { calculatePaginationData } from '../utils/calculatePaginationData.js';
 
 export const getAllContacts = async ({
   page = 1,
@@ -11,23 +10,29 @@ export const getAllContacts = async ({
   filter,
 }) => {
   const skip = (page - 1) * perPage;
-  const finalFilter = { ...filter, userId };
 
-  const totalItems = await Contacts.countDocuments(finalFilter);
+  const contactsQuery = Contacts.find();
 
-  const contacts = await Promise.all([
-    Contacts.find(finalFilter)
+  contactsQuery.where('userId').equals(userId);
+
+  const [total, contacts] = await Promise.all([
+    Contacts.countDocuments(contactsQuery),
+    contactsQuery
       .skip(skip)
       .limit(perPage)
-      .sort({ [sortBy]: sortOrder })
-      .exec(),
-    Contacts.countDocuments(),
+      .sort({ [sortBy]: sortOrder }),
   ]);
 
-  const paginationData = calculatePaginationData(totalItems, page, perPage);
+  const totalPages = Math.ceil(total / perPage);
+
   return {
     data: contacts,
-    ...paginationData,
+    totalItems: total,
+    page,
+    perPage,
+    totalPages,
+    hasNextPage: totalPages > page,
+    hasPreviousPage: page > 1,
   };
 };
 
