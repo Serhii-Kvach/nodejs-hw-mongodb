@@ -1,9 +1,20 @@
+import * as fs from 'node:fs';
+import path from 'node:path';
+
 import { randomBytes } from 'crypto';
 import bcrypt from 'bcrypt';
+import Handlebars from 'handlebars';
+import jwt from 'jsonwebtoken';
 import createHttpError from 'http-errors';
-
+import { getEnvVar } from '../utils/getEnvVar.js';
 import { SessionsModel } from '../models/Session.js';
 import { UserModel } from '../models/User.js';
+import { sendMail } from '../utils/sendMail.js';
+
+const RESER_PASSWORD_TEMPLATE = fs.readFileSync(
+  path.resolve('src', 'templates', 'reset-password-email.hbs'),
+  'utf-8',
+);
 
 export const registerUser = async (payload) => {
   const user = await UserModel.findOne({
@@ -75,3 +86,57 @@ export const refreshUserSession = async (sessionId, refreshToken) => {
 export const logoutUser = async (sessionId) => {
   await SessionsModel.deleteOne({ _id: sessionId });
 };
+
+export async function sendResetEmail(email) {
+  const user = await UserModel.findOne({ email });
+
+  if (user === null) {
+    throw new createHttpError.NotFound('User not found!');
+  }
+  const resetToken = jwt.sign(
+    {
+      sub: user._id,
+      email,
+    },
+    getEnvVar('JWT_SECRET'),
+    {
+      expiresIn: '5m',
+    },
+  );
+
+  const template = Handlebars.compile(RESER_PASSWORD_TEMPLATE);
+
+  const html = template({
+    name: user.name,
+    link: `${getEnvVar('APP_DOMAIN')}/reset-password?token=${resetToken}`,
+  });
+
+  try {
+    await sendMail(user.email, 'Request to reset your password', html);
+  } catch (error) {
+    console.log(error);
+    throw createHttpError(
+      500,
+      'Failed to send the email, please try again later.',
+    );
+  }
+}
+
+export async function resetPassword(password, token) {
+  try {
+    const decoded = jwt.verify(token, getEnvVar('JWT_SECRET'));
+
+    const user = await UserModel.findById(decoded.sub);
+    if (user === null) {
+      throw new createHttpError.NotFound('User not found!');
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    await UserModel.findByIdAndUpdate(user._id, { password: hashedPassword });
+    await SessionsModel.deleteOne({ userId: user._id });
+  } catch (error) {
+    console.log(error);
+    throw createHttpError(401, 'Token is expired or invalid.');
+  }
+}
