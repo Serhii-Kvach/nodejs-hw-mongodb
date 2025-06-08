@@ -34,6 +34,7 @@ export const createContactSchema = Joi.object({
   isFavourite: Joi.boolean().default(false).messages({
     'boolean.base': 'The "isFavourite" field must be a boolean (true/false).',
   }),
+  photo: Joi.string().default(null),
 })
   .min(1)
   .messages({
@@ -50,4 +51,5 @@ export const updateContactSchema = Joi.object({
   email: Joi.string().min(3).max(20).email(),
   contactType: Joi.string().valid('work', 'home', 'personal'),
   isFavourite: Joi.boolean(),
-}).min(1);
+  photo: Joi.string(),
+});

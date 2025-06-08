@@ -7,6 +7,7 @@ import {
   updateContactController,
   deleteContactController,
 } from '../controllers/contacts.js';
+import { upload } from '../middlewares/multer.js';
 import { validateBody } from '../middlewares/validateBody.js';
 import {
   createContactSchema,
@@ -29,6 +30,7 @@ router.get(
 
 router.post(
   '/contacts',
+  upload.single('photo'),
   validateBody(createContactSchema),
   ctrlWrapper(createContactController),
 );
@@ -36,6 +38,7 @@ router.post(
 router.patch(
   '/contacts/:contactId',
   isValidId,
+  upload.single('photo'),
   validateBody(updateContactSchema),
   ctrlWrapper(updateContactController),
 );

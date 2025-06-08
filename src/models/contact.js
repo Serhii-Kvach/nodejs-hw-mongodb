@@ -28,6 +28,11 @@ const contactSchema = new Schema(
       type: Boolean,
       default: false,
     },
+    photo: {
+      type: String,
+      require: false,
+      default: null,
+    },
   },
   {
     timestamps: true,

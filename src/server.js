@@ -1,4 +1,5 @@
 import express from 'express';
+import path from 'node:path';
 import pino from 'pino-http';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
@@ -23,6 +24,8 @@ export const setupServer = () => {
       },
     }),
   );
+
+  app.use('/photo', express.static(path.resolve('src', 'uploads', 'photos')));
 
   app.get('/', (req, res) => {
     res.send('Welcome to the contact service');

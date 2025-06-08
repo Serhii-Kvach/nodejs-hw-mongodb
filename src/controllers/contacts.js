@@ -1,3 +1,5 @@
+import * as fs from 'node:fs/promises';
+import path from 'node:path';
 import createHttpError from 'http-errors';
 import {
   getAllContacts,
@@ -6,6 +8,8 @@ import {
   updateContact,
   deleteContact,
 } from '../services/contacts.js';
+import { getEnvVar } from '../utils/getEnvVar.js';
+import { saveFileToCloudinary } from '../utils/saveFileToCloudinary.js';
 import { parsePaginationParams } from '../utils/parsePaginationParams.js';
 import { parseSortParams } from '../utils/parseSortParams.js';
 import { parseFilterParams } from '../utils/parseFilterParams.js';
@@ -49,7 +53,27 @@ export const getContactByIdController = async (req, res, next) => {
   });
 };
 export const createContactController = async (req, res, next) => {
-  const contact = await createContact({ ...req.body, userId: req.user._id });
+  let photo = null;
+
+  if (getEnvVar('UPLOAD_TO_CLOUDINARY') === 'true') {
+    const result = await saveFileToCloudinary(req.file.path);
+    await fs.unlink(req.file.path);
+
+    photo = result.secure_url;
+  } else {
+    await fs.rename(
+      req.file.path,
+      path.resolve('src', 'uploads', 'photos', req.file.filename),
+    );
+
+    photo = `http://localhost:3000/photo/${req.file.filename}`;
+  }
+
+  const contact = await createContact({
+    ...req.body,
+    userId: req.user._id,
+    photo,
+  });
 
   res.status(201).json({
     status: 201,
@@ -60,11 +84,34 @@ export const createContactController = async (req, res, next) => {
 
 export const updateContactController = async (req, res, next) => {
   const { contactId } = req.params;
+  let photo = null;
+
+  if (req.file) {
+    if (getEnvVar('UPLOAD_TO_CLOUDINARY') === 'true') {
+      const result = await saveFileToCloudinary(req.file.path);
+      await fs.unlink(req.file.path);
+      photo = result.secure_url;
+    } else {
+      const newPath = path.resolve(
+        'src',
+        'uploads',
+        'photos',
+        req.file.filename,
+      );
+      await fs.rename(req.file.path, newPath);
+      photo = `http://localhost:3000/photo/${req.file.filename}`;
+    }
+  }
+
+  const payload = { ...req.body };
+  if (photo) {
+    payload.photo = photo;
+  }
 
   const result = await updateContact(
     { _id: contactId, userId: req.user._id },
-    req.body,
-    { upsert: true },
+    payload,
+    { new: true },
   );
 
   if (result === null) {
