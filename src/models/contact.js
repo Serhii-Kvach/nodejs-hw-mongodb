@@ -17,6 +17,7 @@ const contactSchema = new Schema(
     },
     email: {
       type: String,
+      required: false,
     },
     contactType: {
       type: String,
@@ -30,7 +31,6 @@ const contactSchema = new Schema(
     },
     photo: {
       type: String,
-      require: false,
       default: null,
     },
   },
