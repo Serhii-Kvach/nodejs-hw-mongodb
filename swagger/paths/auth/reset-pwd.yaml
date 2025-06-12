@@ -1,0 +1,49 @@
+tags:
+  - Auth
+summary: Reset password new password user
+operationId: resetPasswordlUser
+description: 'Create new password user'
+security:
+  - bearerAuth: []
+requestBody:
+  content:
+    application/json:
+      schema:
+        type: object
+        required:
+          - token
+          - password
+        properties:
+          token:
+            description: "User's token"
+            type: string
+            example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2ODEyMWE2YTUwZjBiYWM0MTk2NmM3YmIiLCJlbWFpbCI6Imt1bGlzaGsyNkBnbWFpbC5jb20iLCJpYXQiOjE3NDY5Nzc4NzUsImV4cCI6MTc0Njk3ODc3NX0.1-qrlBroXra6o1EU3O8uMGQnmpKlkjEcANn9NVo8kV0'
+          password:
+            description: "User's  new password"
+            type: string
+            example: 'fyt34h23o4h22'
+responses:
+  '200':
+    description: Reset password user's
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - status
+            - message
+            - data
+          properties:
+            status:
+              type: integer
+              example: 200
+            message:
+              type: string
+              example: Password was successfully reset!
+            data:
+              type: object
+              example: {}
+  '400':
+    $ref: '../../components/responses/400.yaml'
+  '401':
+    $ref: '../../components/responses/401.yaml'
